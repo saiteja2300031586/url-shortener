@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.teja.urlshortener.model.Url;
 import com.teja.urlshortener.repository.UrlRepository;
 
@@ -34,22 +35,21 @@ public class UrlService {
         }
         return shortCode.reverse().toString();
     }
+
+    @Transactional
     public Url getUrlByShortCode(String shortCode) {
-
-        Url url = urlRepository.findByShortCode(shortCode);
-
+    	Url url = urlRepository.findByShortCodeForUpdate(shortCode);
         if (url == null) {
             throw new UrlNotFoundException("URL not found");
         }
-
         if (url.getExpiresAt() != null && url.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new UrlExpiredException("URL has expired");
         }
         url.setClickCount(url.getClickCount() + 1);
         urlRepository.save(url);
-
         return url;
     }
+
     public List<Url> getTop5Urls() {
         return urlRepository.findTop5ByOrderByClickCountDesc();
     }
